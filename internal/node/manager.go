@@ -7,11 +7,11 @@ type Configuration struct {
 	ProgramPath string
 	Command     string
 	Ports       []int
-	Nodes       []Node
 }
 
 type NodeManager struct {
 	Config Configuration
+	Nodes  []Node
 }
 
 func NewManager() *NodeManager {
@@ -26,8 +26,8 @@ func (nm *NodeManager) Initialize(config Configuration) error {
 		return fmt.Errorf("expected %d ports, got %d", config.NodeCount, len(config.Ports))
 	}
 
-	config.Nodes = buildNodes(config.Ports)
 	nm.Config = config
+	nm.Nodes = buildNodes(config.Ports)
 	return nil
 }
 
@@ -43,7 +43,13 @@ func buildNodes(ports []int) []Node {
 	return nodes
 }
 
-/* - - - - - HELPERS  - - - - -  */
+// func (nm *NodeManager)StartAllNodes(){
+// 	for _, n := range nm.Nodes {
+
+// 	}
+// }
+
+/* HELPERS */
 func sliceCopyExcludeIndex(index int, original []int) []int {
 	// creates a copy of a slice but excludes the element at the index provided
 	// used to create slice of peers for i'th node hence excluding i'th port in the original ports slice

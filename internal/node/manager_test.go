@@ -15,14 +15,14 @@ func TestInitializeBuildsNodesWithPeers(t *testing.T) {
 		t.Fatalf("Initialize returned an error: %v", err)
 	}
 
-	if len(manager.Config.Nodes) != 2 {
-		t.Fatalf("expected 2 nodes, got %d", len(manager.Config.Nodes))
+	if len(manager.Nodes) != 2 {
+		t.Fatalf("expected 2 nodes, got %d", len(manager.Nodes))
 	}
-	if manager.Config.Nodes[0].NodeID != 1 || manager.Config.Nodes[0].Port != 8081 {
-		t.Fatalf("unexpected first node: %#v", manager.Config.Nodes[0])
+	if manager.Nodes[0].NodeID != 1 || manager.Nodes[0].Port != 8081 {
+		t.Fatalf("unexpected first node: %#v", manager.Nodes[0])
 	}
-	if len(manager.Config.Nodes[0].Peers) != 1 || manager.Config.Nodes[0].Peers[0] != 8082 {
-		t.Fatalf("unexpected first node peers: %#v", manager.Config.Nodes[0].Peers)
+	if len(manager.Nodes[0].Peers) != 1 || manager.Nodes[0].Peers[0] != 8082 {
+		t.Fatalf("unexpected first node peers: %#v", manager.Nodes[0].Peers)
 	}
 }
 

@@ -1,14 +1,15 @@
 package main
 
 import (
+	"log"
+
 	"github.com/jusxtdev/nodeRunner/internal/cli"
 	"github.com/jusxtdev/nodeRunner/internal/node"
 )
 
-func main(){
-	// initialize node manager
+func main() {
 	nm := node.NewManager()
-	// start cli application
-	cli.Run(nm)
-	// wait for goroutines
+	if err := cli.Run(nm); err != nil {
+		log.Fatal(err)
+	}
 }

@@ -9,7 +9,7 @@ package cli
 import (
 	"bufio"
 	"fmt"
-	"log"
+	"io"
 	"os"
 	"strconv"
 	"strings"
@@ -19,66 +19,89 @@ import (
 )
 
 // runs the cli app loop
-func Run(nm *node.NodeManager){
+func Run(nm *node.NodeManager) error {
 	reader := bufio.NewReader(os.Stdin)
 
-	// get the configuration for nodemanager
-	// set the config in the manager
-	config := InputConfig(reader)
-	nm.Initialize(config)
+	config, err := InputConfig(reader)
+	if err != nil {
+		return err
+	}
 
-	fmt.Printf("Configuration done\n CONFIG %v, NODES %v\n", nm.Config, nm.Config.Nodes)
+	if err := nm.Initialize(config); err != nil {
+		return err
+	}
+
+	fmt.Println("Configuration done")
+	return nil
 }
 
-func InputConfig(reader *bufio.Reader) node.Configuration {
+func InputConfig(reader *bufio.Reader) (node.Configuration, error) {
 	// configuration prompt
 	// - ask for number of nodes
 	// - path of program entrypoint
 	// - command to run the program
-	path := inputStringLine("Enter path of program to run :- ", reader)
-	command := inputStringLine("Enter command to execute program :- ", reader)
-	nodeCount := inputIntLine("Enter number of nodes to create (default 1) :- ", reader)
-	// inut port addresses for 'NodeCount' nodes and set it in config 
-	ports := InputPorts(reader, nodeCount)
-
-	// pass the inputs to nodeManager
-	config := node.Configuration{
-		NodeCount: nodeCount,
-		ProgramPath: path,
-		Command: command,
-		Ports: ports,
+	path, err := inputStringLine("Enter path of program to run :- ", reader)
+	if err != nil {
+		return node.Configuration{}, err
 	}
-	return config
+	command, err := inputStringLine("Enter command to execute program :- ", reader)
+	if err != nil {
+		return node.Configuration{}, err
+	}
+	nodeCount, err := inputIntLine("Enter number of nodes to create (default 1) :- ", reader)
+	if err != nil {
+		return node.Configuration{}, err
+	}
+	ports, err := InputPorts(reader, nodeCount)
+	if err != nil {
+		return node.Configuration{}, err
+	}
+
+	return node.Configuration{
+		NodeCount:   nodeCount,
+		ProgramPath: path,
+		Command:     command,
+		Ports:       ports,
+	}, nil
 }
 
-func InputPorts(reader *bufio.Reader, nodeCount int) []int {
+func InputPorts(reader *bufio.Reader, nodeCount int) ([]int, error) {
 	var ports []int
 	for i := range nodeCount {
-		port := inputIntLine(fmt.Sprintf("Enter PORT to use for node %d :- ", i+1), reader)
+		port, err := inputIntLine(fmt.Sprintf("Enter PORT to use for node %d :- ", i+1), reader)
+		if err != nil {
+			return nil, err
+		}
 		ports = append(ports, port)
 	}
-	return ports
+	return ports, nil
 }
 
 /* - - - - - HELPERS  - - - - -  */
-func inputStringLine(prompt string, reader *bufio.Reader) string {
+func inputStringLine(prompt string, reader *bufio.Reader) (string, error) {
 	fmt.Print(prompt)
 
 	line, err := reader.ReadString('\n')
 	if err != nil {
-		log.Fatal(err)
+		if err == io.EOF && line != "" {
+			return strings.TrimRightFunc(line, unicode.IsSpace), nil
+		}
+		return "", err
 	}
 
-	return strings.TrimRightFunc(line, unicode.IsSpace)
+	return strings.TrimRightFunc(line, unicode.IsSpace), nil
 }
 
-func inputIntLine(prompt string, reader *bufio.Reader) int {
-	line := inputStringLine(prompt, reader)
+func inputIntLine(prompt string, reader *bufio.Reader) (int, error) {
+	line, err := inputStringLine(prompt, reader)
+	if err != nil {
+		return 0, err
+	}
 
 	value, err := strconv.Atoi(line)
 	if err != nil {
-		log.Fatal(err)
+		return 0, fmt.Errorf("invalid integer %q: %w", line, err)
 	}
 
-	return value
+	return value, nil
 }
